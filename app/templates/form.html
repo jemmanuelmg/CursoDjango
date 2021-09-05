@@ -1,0 +1,84 @@
+{% extends 'body.html' %}
+
+{% block content %}
+    <form method="POST" action=".">
+        <div class="card card-default">
+        <div class="card-header">
+            <h3 class="card-title">
+                {% if action == 'add' %}
+                    <i class="fas fa-plus"></i>
+                {%  else %}
+                    <i class="fas fa-edit"></i>
+                {% endif %}
+                {{ title }}
+            </h3>
+        </div>
+        <!-- /.card-header -->
+        <div class="card-body">
+            {{ form.errors }}
+            {% csrf_token %}
+            <!-- Se crea un input escondido para saber qué acción debe ejecutarse al dar click en submit-->
+            <input type="hidden" name="action" value="{{ action }}">
+            {% for field in form.visible_fields %}
+                 <div class="form-group">
+                    <label for="">{{ field.label }}</label>
+                    {{ field }}
+                 </div>
+            {% endfor %}
+        </div>
+        <!-- /.card-body -->
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> &nbsp;&nbsp; Guardar registro</button>
+        </div>
+    </div>
+    </form>
+    <!-- /.card -->
+
+    <script>
+        {% if form.errors %}
+            let allErrors = '<p>Porfavor corrige los siguientes errores de validación:</p>';
+
+            {% for field in form %}
+                {% for error in field.errors %}
+                    allErrors += '* {{ error }} <br>'
+                {% endfor %}
+            {% endfor %}
+
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              html: allErrors
+            })
+        {% endif %}
+
+        // Guardar formulario usando Ajax
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+            let parameters = $(this).serializeArray();
+            $.ajax({
+                url: window.location.pathname,
+                type: 'POST',
+                data: parameters,
+                dataType: 'json'
+            }).done(function (data) {
+                // Si luego de procesar la petición en el método  done
+                // regresa un objeto data que NO tenga la propiedad 'error'
+                // entonces redirecciona a la lista de categorías. Pero si
+                // contiene la propiedad error, entonces
+                if (!data.hasOwnProperty('error')) {
+                    location.href = '{{ list_url }}';
+                    return false;
+                }
+                //mostrar una ventana SweetAlert con los errores de ejecucion del POST
+                message_error(data.error);
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(textStatus + ': ' + errorThrown);
+            }).always(function (data) {
+            });
+        });
+
+    </script>
+
+
+
+{% endblock %}
